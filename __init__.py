@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from . import paint as _paint
 from . import settings as _settings
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 PLUGIN_ID = "eikon"
 MAX_SOURCE_BYTES = 25 * 1024 * 1024
@@ -107,7 +107,7 @@ def make_provider(ctx: Any = None):
 
         def list_models(self) -> List[Dict[str, Any]]:
             values, _ = self.settings.resolved()
-            model = str(values.get("model") or "") or "(the server's first model)"
+            model = str(values.get("image_model") or "") or "(the server's first model)"
             return [{"id": model, "display": f"{model} on {values.get('host') or '(no host set)'}",
                      "speed": "your GPU", "strengths": "Private, no per-image cost", "price": "free"}]
 
@@ -193,10 +193,16 @@ def _seed(ctx: Any, settings: _Settings, overwrite: bool) -> None:
     if not values:
         print("Nothing to copy: every setting eikon leaves blank is blank in the dreams too, or eikon has its own.")
         return
+    copied = 0
     for key, value in values.items():
-        ctx.set_config(key, value)
+        try:
+            ctx.set_config(key, value)
+        except Exception as exc:                  # one refused key must not stop the rest
+            print(f"  {key:16}   not copied: {exc}")
+            continue
+        copied += 1
         print(f"  {key:16} = {value}")
-    print(f"Copied {len(values)} dream setting(s) into eikon's own settings. Changing them changes only eikon; "
+    print(f"Copied {copied} dream setting(s) into eikon's own settings. Changing them changes only eikon; "
           "her dreams keep theirs.")
 
 

@@ -47,10 +47,10 @@ def test_blank_settings_follow_the_dreams_and_set_ones_win():
     s = _settings()
     values, sources = s.resolve({}, DREAMS)
     assert values["host"] == "http://10.1.0.98:8188" and sources["host"] == "dreams"
-    assert values["model"] == "z_image_turbo_bf16.safetensors" and values["strength"] == 0.7
+    assert values["image_model"] == "z_image_turbo_bf16.safetensors" and values["strength"] == 0.7
     assert values["steps"] == 0 and sources["steps"] == "built-in"
-    values, sources = s.resolve({"model": "sd_xl_base_1.0.safetensors", "width": 0, "host": "  "}, DREAMS)
-    assert values["model"] == "sd_xl_base_1.0.safetensors" and sources["model"] == "eikon"
+    values, sources = s.resolve({"image_model": "sd_xl_base_1.0.safetensors", "width": 0, "host": "  "}, DREAMS)
+    assert values["image_model"] == "sd_xl_base_1.0.safetensors" and sources["image_model"] == "eikon"
     assert values["width"] == 1024 and sources["width"] == "dreams"          # 0 is blank
     assert sources["host"] == "dreams"                                       # whitespace is blank
     values, sources = s.resolve({}, {})
@@ -60,8 +60,8 @@ def test_blank_settings_follow_the_dreams_and_set_ones_win():
 def test_seeding_copies_only_blank_settings_and_never_touches_the_dreams():
     s = _settings()
     dreams = dict(DREAMS)
-    got = s.seed_values({"model": "mine.safetensors"}, dreams)
-    assert "model" not in got and got["host"] == "http://10.1.0.98:8188" and got["enlarge"] == 2.0
+    got = s.seed_values({"image_model": "mine.safetensors"}, dreams)
+    assert "image_model" not in got and got["host"] == "http://10.1.0.98:8188" and got["enlarge"] == 2.0
     assert "people" not in got and "edit_model" not in got                   # only keys eikon has
     assert dreams == DREAMS
 
@@ -91,6 +91,15 @@ def test_the_manifest_offers_every_setting_in_the_desktop_form():
     for key, spec in manifest["config_schema"].items():
         assert spec.get("label") and spec.get("description"), key
         assert spec.get("default") in ("", 0), key                            # blank by default: follow the dreams
+
+
+def test_every_setting_name_is_one_hermes_lets_a_plugin_store():
+    # Hermes refuses plugin settings named after core config roots ("model", "plugins", ...).
+    if not HAVE_HERMES:
+        pytest.skip("needs HERMES_SRC")
+    from hermes_cli.plugins_state import _plugin_relative_segments
+    for key in _settings().DREAM_KEYS:
+        _plugin_relative_segments(key)
 
 
 class _Ctx:
@@ -163,7 +172,7 @@ def test_draws_and_reworks_through_the_painter(home, monkeypatch):
     assert calls[-1][0] == "sd_xl_base_1.0.safetensors" and calls[-1][2] == b"\x89PNG\r\n\x1a\nphoto"
 
     # a setting changed in Desktop applies to the next picture, and the dreams keep theirs
-    ctx.settings["model"] = "other.safetensors"
+    ctx.settings["image_model"] = "other.safetensors"
     provider.generate("again", "square")
     assert calls[-1][0] == "other.safetensors" and calls[-1][3] == (896, 896)
     assert json.loads((home / "holonomic.json").read_text()) == DREAMS
@@ -192,9 +201,9 @@ def test_seed_command_copies_dreams_into_eikon_only(home, capsys):
     if not HAVE_HERMES:
         pytest.skip("needs HERMES_SRC")
     eikon = _load()
-    ctx = _Ctx({"model": "keep.safetensors"})
+    ctx = _Ctx({"image_model": "keep.safetensors"})
     eikon._seed(ctx, eikon._Settings(ctx), overwrite=False)
-    assert ctx.settings["host"] == "http://10.1.0.98:8188" and ctx.settings["model"] == "keep.safetensors"
+    assert ctx.settings["host"] == "http://10.1.0.98:8188" and ctx.settings["image_model"] == "keep.safetensors"
     eikon._seed(ctx, eikon._Settings(ctx), overwrite=True)
-    assert ctx.settings["model"] == "z_image_turbo_bf16.safetensors"
+    assert ctx.settings["image_model"] == "z_image_turbo_bf16.safetensors"
     assert json.loads((home / "holonomic.json").read_text()) == DREAMS

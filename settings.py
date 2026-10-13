@@ -20,7 +20,7 @@ from typing import Any, Dict, Tuple
 DREAM_KEYS: Dict[str, Any] = {
     "api": "dream_image_api",
     "host": "dream_image_host",
-    "model": "dream_image_model",
+    "image_model": "dream_image_model",
     "family": "dream_image_family",
     "text_encoder": "dream_image_text_encoder",
     "vae": "dream_image_vae",
@@ -39,7 +39,7 @@ DREAM_KEYS: Dict[str, Any] = {
 
 # Used when neither eikon nor holonomic has a value.
 BUILT_IN: Dict[str, Any] = {
-    "api": "comfyui", "host": "", "model": "", "family": "", "text_encoder": "", "vae": "", "text_encoder_on": "",
+    "api": "comfyui", "host": "", "image_model": "", "family": "", "text_encoder": "", "vae": "", "text_encoder_on": "",
     "width": 1024, "height": 768, "steps": 0, "strength": 0.6, "negative": "", "timeout": 600,
     "enlarge": 0.0, "enlarge_model": "", "edit_model": "", "edit_family": "",
 }

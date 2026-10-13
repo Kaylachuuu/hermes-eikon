@@ -31,7 +31,7 @@ dream setting from `holonomic.json`, so a fresh install draws exactly the way he
 | Setting | Dream setting it follows when blank |
 |---|---|
 | `host`, `api` | `dream_image_host`, `dream_image_api` |
-| `model`, `family` | `dream_image_model`, `dream_image_family` |
+| `image_model`, `family` | `dream_image_model`, `dream_image_family` |
 | `text_encoder`, `vae`, `text_encoder_on` | the Z-Image parts, likewise |
 | `width`, `height` | the landscape size; portrait swaps them, square keeps the area |
 | `steps`, `negative`, `timeout` | likewise |

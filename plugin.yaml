@@ -1,5 +1,5 @@
 name: eikon
-version: 0.1.0
+version: 0.1.1
 description: "Image generation on your own ComfyUI: new pictures from words, or a picture you send reworked. Starts from holonomic's dream settings, with its own that never change her dreams."
 author: Kayla Roylance
 license: MIT
@@ -18,7 +18,7 @@ config_schema:
     default: ""
     label: "Server type"
     description: "ComfyUI, the Stable Diffusion WebUI API (a1111), or an OpenAI-style images API. Blank: as her dreams."
-  model:
+  image_model:
     type: str
     default: ""
     label: "Model"
