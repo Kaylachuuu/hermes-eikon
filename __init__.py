@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from . import paint as _paint
 from . import settings as _settings
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 PLUGIN_ID = "eikon"
 MAX_SOURCE_BYTES = 25 * 1024 * 1024
@@ -200,6 +200,22 @@ def _seed(ctx: Any, settings: _Settings, overwrite: bool) -> None:
           "her dreams keep theirs.")
 
 
+def _seed_once(ctx: Any, settings: _Settings) -> None:
+    """The first time eikon loads where her dream settings exist, copy them into eikon's own blank settings, so the
+    Desktop form shows real values to adjust.  Only once: later changes to her dreams stay out of eikon."""
+    try:
+        if ctx.state.get("seeded_from_dreams", default=False):
+            return
+        dream = settings.dream()
+        if not dream:
+            return                                    # no dream settings yet; try again on the next start
+        for key, value in _settings.seed_values(settings.own(), dream).items():
+            ctx.set_config(key, value)
+        ctx.state.set("seeded_from_dreams", True)
+    except Exception:                                 # never stop the plugin loading over this
+        pass
+
+
 def _try(settings: _Settings, words: str, picture: Optional[str]) -> None:
     provider = make_provider(settings._ctx)
     result = provider.generate(words, "landscape", image_url=picture)
@@ -212,6 +228,7 @@ def _try(settings: _Settings, words: str, picture: Optional[str]) -> None:
 def register(ctx) -> None:
     ctx.register_image_gen_provider(make_provider(ctx))
     settings = _Settings(ctx)
+    _seed_once(ctx, settings)
 
     def setup(parser) -> None:
         subs = parser.add_subparsers(dest="eikon_command")

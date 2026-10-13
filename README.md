@@ -26,7 +26,9 @@ Then tick **Image Generation** for each platform in `hermes tools`, and restart 
 
 Eikon's settings are on its own page in Hermes Desktop (**Settings → Plugins → eikon**), stored under
 `plugins.entries.eikon.settings` in config.yaml. Every setting left blank (empty, or 0) uses her matching
-dream setting from `holonomic.json`, so a fresh install draws exactly the way her dreams do.
+dream setting from `holonomic.json`, so a fresh install draws exactly the way her dreams do. The first time
+eikon loads where her dream settings exist, it copies them into its own blank settings, so the form shows real
+values to adjust. That happens once; later changes to her dreams stay out of eikon.
 
 | Setting | Dream setting it follows when blank |
 |---|---|
@@ -40,7 +42,7 @@ dream setting from `holonomic.json`, so a fresh install draws exactly the way he
 | `edit_model`, `edit_family` | eikon's own: a different model for reworking, e.g. an instruction-editing model |
 
 - **`hermes eikon status`** shows each value and where it came from: eikon, dreams or built-in.
-- **`hermes eikon seed`** copies the dream values into eikon's own settings (only the blank ones; `--overwrite`
+- **`hermes eikon seed`** copies the dream values again into eikon's own settings (only the blank ones; `--overwrite`
   replaces them all). After that the two are independent: change eikon's, and her dreams keep theirs.
 - **`hermes eikon try "words" [--picture PATH]`** draws one picture now and prints where it was saved.
 
