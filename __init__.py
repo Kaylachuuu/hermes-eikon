@@ -193,10 +193,16 @@ def _seed(ctx: Any, settings: _Settings, overwrite: bool) -> None:
     if not values:
         print("Nothing to copy: every setting eikon leaves blank is blank in the dreams too, or eikon has its own.")
         return
+    copied = 0
     for key, value in values.items():
-        ctx.set_config(key, value)
+        try:
+            ctx.set_config(key, value)
+        except Exception as exc:                  # one refused key must not stop the rest
+            print(f"  {key:16}   not copied: {exc}")
+            continue
+        copied += 1
         print(f"  {key:16} = {value}")
-    print(f"Copied {len(values)} dream setting(s) into eikon's own settings. Changing them changes only eikon; "
+    print(f"Copied {copied} dream setting(s) into eikon's own settings. Changing them changes only eikon; "
           "her dreams keep theirs.")
 
 
@@ -210,7 +216,10 @@ def _seed_once(ctx: Any, settings: _Settings) -> None:
         if not dream:
             return                                    # no dream settings yet; try again on the next start
         for key, value in _settings.seed_values(settings.own(), dream).items():
-            ctx.set_config(key, value)
+            try:
+                ctx.set_config(key, value)
+            except Exception:                         # one refused key must not stop the rest
+                pass
         ctx.state.set("seeded_from_dreams", True)
     except Exception:                                 # never stop the plugin loading over this
         pass

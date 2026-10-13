@@ -93,6 +93,15 @@ def test_the_manifest_offers_every_setting_in_the_desktop_form():
         assert spec.get("default") in ("", 0), key                            # blank by default: follow the dreams
 
 
+def test_every_setting_name_is_one_hermes_lets_a_plugin_store():
+    # Hermes refuses plugin settings named after core config roots ("model", "plugins", ...).
+    if not HAVE_HERMES:
+        pytest.skip("needs HERMES_SRC")
+    from hermes_cli.plugins_state import _plugin_relative_segments
+    for key in _settings().DREAM_KEYS:
+        _plugin_relative_segments(key)
+
+
 def _check_key(key):
     """Hermes' own rule for plugin setting names, when its source is at hand (it refuses "model", for one)."""
     if HAVE_HERMES:
@@ -244,10 +253,3 @@ def test_first_load_waits_for_dream_settings(tmp_path, monkeypatch):
     eikon.register(ctx)
     assert "host" not in ctx.settings and not ctx.state.get("seeded_from_dreams")
 
-
-def test_every_setting_name_is_one_hermes_accepts():
-    if not HAVE_HERMES:
-        pytest.skip("needs HERMES_SRC")
-    s = _settings()
-    for key in s.DREAM_KEYS:
-        _check_key(key)
