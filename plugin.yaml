@@ -1,0 +1,98 @@
+name: eikon
+version: 0.1.0
+description: "Image generation on your own ComfyUI: new pictures from words, or a picture you send reworked. Starts from holonomic's dream settings, with its own that never change her dreams."
+author: Kayla Roylance
+license: MIT
+homepage: https://github.com/Kaylachuuu/hermes-eikon
+# Every setting left blank (empty, or 0) uses her matching dream setting from holonomic.json.
+# `hermes eikon seed` copies those into these settings; `hermes eikon status` shows what is in use.
+config_schema:
+  host:
+    type: str
+    default: ""
+    label: "Image server"
+    description: "Address of the image server, e.g. http://10.1.0.98:8188. Blank: the one her dreams use."
+  api:
+    type: str
+    choices: ["", comfyui, a1111, openai]
+    default: ""
+    label: "Server type"
+    description: "ComfyUI, the Stable Diffusion WebUI API (a1111), or an OpenAI-style images API. Blank: as her dreams."
+  model:
+    type: str
+    default: ""
+    label: "Model"
+    description: "Model file on the server, e.g. z_image_turbo_bf16.safetensors or sd_xl_base_1.0.safetensors. Blank: as her dreams."
+  family:
+    type: str
+    choices: ["", checkpoint, zimage]
+    default: ""
+    label: "Model family (ComfyUI)"
+    description: "How ComfyUI loads the model: a single checkpoint file, or Z-Image (model, text encoder and VAE). Blank: worked out from the model's name."
+  text_encoder:
+    type: str
+    default: ""
+    label: "Text encoder (Z-Image)"
+    description: "Blank: as her dreams, else qwen_3_4b.safetensors."
+  vae:
+    type: str
+    default: ""
+    label: "VAE (Z-Image)"
+    description: "Blank: as her dreams, else ae.safetensors."
+  text_encoder_on:
+    type: str
+    choices: ["", cpu]
+    default: ""
+    label: "Read the prompt on (Z-Image)"
+    description: "cpu keeps the text encoder off the graphics card. Blank: as her dreams."
+  width:
+    type: int
+    default: 0
+    label: "Width"
+    description: "Width of a landscape picture in pixels (portrait swaps the two; square keeps the area). 0: as her dreams."
+  height:
+    type: int
+    default: 0
+    label: "Height"
+    description: "Height of a landscape picture in pixels. 0: as her dreams."
+  steps:
+    type: int
+    default: 0
+    label: "Steps"
+    description: "Sampling steps. 0: as her dreams, else the model's usual (9 for Z-Image Turbo, 20 otherwise)."
+  strength:
+    type: float
+    default: 0
+    label: "Rework strength"
+    description: "When reworking a picture, how far it may move from the original: 0.1 barely, 1.0 almost a new picture. 0: as her dreams."
+  negative:
+    type: str
+    default: ""
+    label: "Negative prompt"
+    description: "What to keep out of pictures (checkpoint models only). Blank: as her dreams."
+  edit_model:
+    type: str
+    default: ""
+    label: "Model for reworking (optional)"
+    description: "A different model for reworking a picture you send. Blank: the same model as for new pictures."
+  edit_family:
+    type: str
+    choices: ["", checkpoint, zimage]
+    default: ""
+    label: "Family of the rework model"
+    description: "Only with a separate rework model. Blank: worked out from its name."
+  enlarge:
+    type: float
+    default: 0
+    label: "Enlarge factor"
+    description: "When she asks for a larger picture, enlarge by this much with an upscaling model (2 = twice the size). 0: as her dreams."
+  enlarge_model:
+    type: str
+    default: ""
+    label: "Upscaling model"
+    description: "Blank: as her dreams, else RealESRGAN_x2plus.pth."
+  timeout:
+    type: int
+    default: 0
+    label: "Timeout (seconds)"
+    description: "How long to wait for a picture. 0: as her dreams, else 600."
