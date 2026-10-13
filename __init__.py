@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 from . import paint as _paint
 from . import settings as _settings
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 PLUGIN_ID = "eikon"
 MAX_SOURCE_BYTES = 25 * 1024 * 1024
@@ -107,7 +107,7 @@ def make_provider(ctx: Any = None):
 
         def list_models(self) -> List[Dict[str, Any]]:
             values, _ = self.settings.resolved()
-            model = str(values.get("model") or "") or "(the server's first model)"
+            model = str(values.get("image_model") or "") or "(the server's first model)"
             return [{"id": model, "display": f"{model} on {values.get('host') or '(no host set)'}",
                      "speed": "your GPU", "strengths": "Private, no per-image cost", "price": "free"}]
 
