@@ -102,16 +102,37 @@ def test_every_setting_name_is_one_hermes_lets_a_plugin_store():
         _plugin_relative_segments(key)
 
 
+def _check_key(key):
+    """Hermes' own rule for plugin setting names, when its source is at hand (it refuses "model", for one)."""
+    if HAVE_HERMES:
+        from hermes_cli.plugins_state import _plugin_relative_segments
+        _plugin_relative_segments(key)
+
+
+class _State:
+    def __init__(self):
+        self.data = {}
+
+    def get(self, key, default=None):
+        return self.data.get(key, default)
+
+    def set(self, key, value):
+        self.data[key] = value
+
+
 class _Ctx:
     def __init__(self, settings=None):
         self.settings = dict(settings or {})
         self.registered = []
         self.cli = []
+        self.state = _State()
 
     def get_config(self, key, default=None):
+        _check_key(key)
         return self.settings.get(key, default)
 
     def set_config(self, key, value):
+        _check_key(key)
         self.settings[key] = value
 
     def register_image_gen_provider(self, provider):
@@ -207,3 +228,28 @@ def test_seed_command_copies_dreams_into_eikon_only(home, capsys):
     eikon._seed(ctx, eikon._Settings(ctx), overwrite=True)
     assert ctx.settings["image_model"] == "z_image_turbo_bf16.safetensors"
     assert json.loads((home / "holonomic.json").read_text()) == DREAMS
+
+
+def test_first_load_copies_the_dreams_in_once(home):
+    if not HAVE_HERMES:
+        pytest.skip("needs HERMES_SRC")
+    eikon = _load()
+    ctx = _Ctx({"strength": 0.4})
+    eikon.register(ctx)
+    assert ctx.settings["host"] == "http://10.1.0.98:8188" and ctx.settings["strength"] == 0.4
+    ctx.settings["host"] = ""                         # cleared by hand afterwards: stays cleared
+    eikon.register(ctx)
+    assert ctx.settings["host"] == ""
+    assert json.loads((home / "holonomic.json").read_text()) == DREAMS
+
+
+def test_first_load_waits_for_dream_settings(tmp_path, monkeypatch):
+    if not HAVE_HERMES:
+        pytest.skip("needs HERMES_SRC")
+    import hermes_constants
+    monkeypatch.setattr(hermes_constants, "get_hermes_home", lambda: tmp_path, raising=False)
+    eikon = _load()
+    ctx = _Ctx()
+    eikon.register(ctx)
+    assert "host" not in ctx.settings and not ctx.state.get("seeded_from_dreams")
+

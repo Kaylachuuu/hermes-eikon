@@ -20,7 +20,7 @@ from typing import Any, Dict, Tuple
 DREAM_KEYS: Dict[str, Any] = {
     "api": "dream_image_api",
     "host": "dream_image_host",
-    "image_model": "dream_image_model",
+    "image_model": "dream_image_model",     # not "model": Hermes reserves that name in plugin settings
     "family": "dream_image_family",
     "text_encoder": "dream_image_text_encoder",
     "vae": "dream_image_vae",
