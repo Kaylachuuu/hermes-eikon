@@ -4,6 +4,8 @@ Registers an image-generation provider named ``eikon``.  With ``image_gen.provid
 ``image_generate`` call goes to the image server: a new picture from words, or, given a picture, that picture
 reworked towards the words.  It draws the way holonomic's dreams do (the same painter), from its own settings,
 which start from the dream settings and never change them.  See settings.py and README.md.
+
+The same package loads into Oikos as a faculty (on_oikos.py, oikos-faculty.yaml), drawing with Oikos's one painter.
 """
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ from typing import Any, Dict, List, Optional
 from . import paint as _paint
 from . import settings as _settings
 
-__version__ = "0.1.2"
+__version__ = "0.2.0"
 
 PLUGIN_ID = "eikon"
 MAX_SOURCE_BYTES = 25 * 1024 * 1024
@@ -234,7 +236,16 @@ def _try(settings: _Settings, words: str, picture: Optional[str]) -> None:
         print(f"Not drawn: {result.get('error')}")
 
 
+def _is_oikos(ctx) -> bool:
+    """Oikos's registrar (its oikos/faculties.py) rather than Hermes' plugin context."""
+    return all(hasattr(ctx, a) for a in ("manifest", "moment", "identity", "data_dir"))
+
+
 def register(ctx) -> None:
+    if _is_oikos(ctx):
+        from .on_oikos import register as on_oikos
+        on_oikos(ctx)
+        return
     ctx.register_image_gen_provider(make_provider(ctx))
     settings = _Settings(ctx)
     _seed_once(ctx, settings)

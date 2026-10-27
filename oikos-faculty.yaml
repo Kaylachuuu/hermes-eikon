@@ -1,0 +1,12 @@
+# Eikon as an Oikos faculty (on_oikos.py). What it may register; Oikos refuses anything not named here.
+name: eikon
+version: 0.2.0
+her:
+  tools: [image_generate]         # a new picture from words, or a picture reworked
+  show: true                      # the picture she makes is shown to the person she is talking with
+kernel:
+  paint: true                     # drawn by Oikos's one painter, which says where pictures are made
+admin:
+  commands: [eikon.status, eikon.try]
+channels:
+  post: [eikon.how]               # Eikon's own choices, for Melete's workshop

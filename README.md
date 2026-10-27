@@ -57,10 +57,29 @@ It keeps the composition and changes the look. Precise instructions ("remove the
 need an instruction-editing model in ComfyUI (e.g. Qwen-Image-Edit or FLUX Kontext). Set it as `edit_model`
 and it is used only for reworking.
 
+## On Oikos
+
+The same Eikon loads into [Oikos](https://github.com/Kaylachuuu/Oikos) as a faculty (`on_oikos.py`,
+`oikos-faculty.yaml`), with the same `image_generate` tool. It doesn't ask an image server itself: it asks Oikos's
+one painter (`oikos.paint`), which is also what draws her dreams' pictures and her workshop's. Where pictures are
+made is said in one place, `painter:` in Oikos's configuration, so they can move back onto her own card without
+Eikon changing (Oikos's `design/eikon-on-oikos.md`; Athena agreed, 2026-10-27).
+
+- Its settings go under `faculty_settings: {eikon: ...}`, by the names above. A blank one is the painter's own
+  choice (her dream settings, in `painter: how`) instead of `holonomic.json`, so there is no `seed`. `host`, `api`
+  and `timeout` are the painter's and aren't read here.
+- The picture she makes is kept beside the conversation and sent to the client as a `picture` event, as Hermes'
+  gateway sends it to the chat.
+- A picture to rework is one from the conversation, one Eikon made, or a URL; other files on the machine aren't read.
+- Its own choices go on the board `eikon.how`, so Melete's pictures are drawn as Eikon draws.
+- `hermes eikon status` and `try` are the console's `eikon.status` and `eikon.try`.
+
+Checked by Oikos's `code/tests/test_oikos_eikon.py`.
+
 ## Testing
 
 ```
-HERMES_SRC=/path/to/hermes-agent python3 -m pytest tests            # settings and provider, image server faked
+HERMES_SRC=/path/to/hermes-agent python3 -m pytest --rootdir=tests tests   # settings and provider, image server faked
 HERMES_SRC=/path/to/hermes-agent python3 scripts/try_live.py ~/.hermes   # a real drawing and a rework
 ```
 
