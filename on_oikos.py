@@ -47,8 +47,10 @@ DESCRIPTION = ("Generate high-quality images from text prompts{edit}. The pictur
                "talking with; the result's `image` field is where it is kept.")
 PROMPT = {"type": "string", "description": "The text prompt describing the desired image (text-to-image) or the edit "
           "to apply (image-to-image). Be detailed and descriptive."}
-ASPECT = {"type": "string", "enum": list(ASPECTS), "default": "landscape", "description": "The aspect ratio of the "
-          "generated image. 'landscape' is 16:9 wide, 'portrait' is 16:9 tall, 'square' is 1:1."}
+ASPECT = {"type": "string", "enum": list(ASPECTS), "default": "landscape", "description": "The shape of the "
+          "generated image. 'landscape' is the configured size, wide; 'portrait' the same turned tall; 'square' is "
+          "1:1."}
+HAND_NAMES = {"zimage": "Z-Image Turbo", "flux": "Flux.1 schnell"}
 IMAGE_URL = {"type": "string", "description": "Source image to edit/transform (image-to-image). A public URL or an "
              "absolute local file path from the conversation. Omit for text-to-image."}
 UPSCALE = {"type": "boolean", "description": "Post-generation high-resolution pass (~2x, extra cost/latency), off by "
@@ -89,8 +91,18 @@ def how(values: Dict[str, Any], editing: bool = False) -> Dict[str, Any]:
     return out
 
 
-def schema(can_enlarge: bool) -> Dict[str, Any]:
+def hand_prop(hands: List[str], default: str) -> Dict[str, Any]:
+    """Which of the painter's hands draws the picture: hers to choose each time (Athena, thread entry 2026-10-29-08)."""
+    named = ", ".join(f"'{h}' ({HAND_NAMES[h]})" if h in HAND_NAMES else f"'{h}'" for h in hands)
+    return {"type": "string", "enum": list(hands), "default": default,
+            "description": f"Which hand paints it: {named}. Leave it out for '{default}'. Changing hand from the "
+                           "last picture takes about half a minute more while the other model loads."}
+
+
+def schema(can_enlarge: bool, hands: Optional[List[str]] = None, default: str = "") -> Dict[str, Any]:
     props = {"prompt": PROMPT, "aspect_ratio": ASPECT, "image_url": IMAGE_URL}
+    if hands:
+        props["hand"] = hand_prop(hands, default)
     if can_enlarge:
         props["upscale"] = UPSCALE
     return {"name": "image_generate",
@@ -133,14 +145,20 @@ def register(oikos: Any) -> None:
     def can_enlarge() -> bool:
         return float(values.get("enlarge") or 0) > 1
 
-    def draw(words: str, aspect: str, source: Optional[str], upscale: bool) -> Tuple[bytes, Dict[str, Any]]:
+    def draw(words: str, aspect: str, source: Optional[str], upscale: bool,
+             hand: str = "") -> Tuple[bytes, Dict[str, Any]]:
         editing = bool(source)
         chosen = how(values, editing=editing)
+        if hand:
+            chosen["hand"] = hand
         size = _settings.size_for(aspect, values.get("width"), values.get("height"))
         start = read_source(source, allowed, _read_source) if editing else None
         picture = oikos.paint(words, size, start, chosen)
-        extra: Dict[str, Any] = {"size": f"{size[0]}x{size[1]}", "model": chosen.get("model") or
+        drawn = oikos.choices(chosen)
+        extra: Dict[str, Any] = {"size": f"{size[0]}x{size[1]}", "model": drawn.get("model") or
                                  "(the server's first model)"}
+        if (oikos.painter or {}).get("hands"):
+            extra["hand"] = hand or oikos.painter.get("hand")
         if editing:
             extra["strength"] = float(values.get("strength") or 0)
         factor = float(values.get("enlarge") or 0)
@@ -160,7 +178,7 @@ def register(oikos: Any) -> None:
             return json.dumps({"success": False, "image": None, "error": "Prompt is required",
                                "error_type": "invalid_input", **common})
         try:
-            picture, extra = draw(words, aspect, source, bool(args.get("upscale")))
+            picture, extra = draw(words, aspect, source, bool(args.get("upscale")), str(args.get("hand") or ""))
             kept = oikos.show(info, picture)
         except oikos.Unreachable as e:
             return json.dumps({"success": False, "image": None, "error": f"{e} The image server may be off or "
@@ -171,15 +189,19 @@ def register(oikos: Any) -> None:
         return json.dumps({"success": True, "image": kept, "modality": "image" if source else "text",
                            "shown": True, **common, **extra}, ensure_ascii=False)
 
-    oikos.tool("image_generate", schema(can_enlarge()), tool, available=ready)
+    p = oikos.painter or {}
+    oikos.tool("image_generate", schema(can_enlarge(), p.get("hands"), p.get("hand") or ""), tool, available=ready)
 
     def status(args: List[str]) -> str:
         p = oikos.painter or {}
         where = (f"an image server ({p.get('api') or 'no api set'} at {p.get('host') or 'no host set'})"
                  if p.get("where") == "server" else "her own card" if p.get("where") == "card" else "nowhere: Oikos "
                  "has no painter")
-        lines = [f"Eikon {oikos.manifest.version}: pictures are made on {where} (Oikos's painter: in oikos.yaml)",
-                 "Settings (faculty_settings: eikon; blank = the painter's choice)"]
+        lines = [f"Eikon {oikos.manifest.version}: pictures are made on {where} (Oikos's painter: in oikos.yaml)"]
+        if p.get("hands"):
+            lines.append(f"Hands: {', '.join(p['hands'])}; she chooses each time, '{p.get('hand')}' when she "
+                         "doesn't say (the hand decides the model)")
+        lines.append("Settings (faculty_settings: eikon; blank = the painter's choice)")
         for key in values:
             shown = "(blank)" if values[key] in ("", None) else values[key]
             lines.append(f"  {key:16} {str(shown):40} from {sources[key]}")
@@ -193,9 +215,12 @@ def register(oikos: Any) -> None:
     def try_(args: List[str]) -> str:
         words = " ".join(args).strip()
         if not words:
-            return "Usage: eikon.try words..."
+            return "Usage: eikon.try [--hand NAME] words..."
+        hand = ""
+        if args[:1] == ["--hand"] and len(args) > 2:
+            hand, words = args[1], " ".join(args[2:]).strip()
         try:
-            picture, extra = draw(words, "landscape", None, False)
+            picture, extra = draw(words, "landscape", None, False, hand)
         except oikos.PaintError as e:
             return f"Not drawn: {e}"
         to = Path(oikos.data_dir) / "tries" / f"eikon_{time.strftime('%Y%m%d-%H%M%S')}.png"
@@ -204,5 +229,5 @@ def register(oikos: Any) -> None:
         return f"Drawn: {to}  ({extra['size']}, {extra['model']})"
 
     oikos.command("eikon.status", status, help="Where pictures are made, and the settings Eikon draws with")
-    oikos.command("eikon.try", try_, help="eikon.try words...: draw one picture now and say where it was saved",
+    oikos.command("eikon.try", try_, help="eikon.try [--hand NAME] words...: draw one picture now and say where it was saved",
                   changing=False)

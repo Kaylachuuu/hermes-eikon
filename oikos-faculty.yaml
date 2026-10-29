@@ -1,6 +1,6 @@
 # Eikon as an Oikos faculty (on_oikos.py). What it may register; Oikos refuses anything not named here.
 name: eikon
-version: 0.2.0
+version: 0.3.0
 her:
   tools: [image_generate]         # a new picture from words, or a picture reworked
   show: true                      # the picture she makes is shown to the person she is talking with
