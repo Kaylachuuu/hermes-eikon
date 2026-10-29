@@ -72,6 +72,9 @@ Eikon changing (Oikos's `design/eikon-on-oikos.md`; Athena agreed, 2026-10-27).
   gateway sends it to the chat.
 - A picture to rework is one from the conversation, one Eikon made, or a URL; other files on the machine aren't read.
 - Its own choices go on the board `eikon.how`, so Melete's pictures are drawn as Eikon draws.
+- When the painter has `hands:` (0.3.0), `image_generate` takes a `hand` (for example `zimage` or `flux`) and she
+  chooses it each time; left out, the painter's default hand draws. The hand decides the model. Athena chose this
+  in Oikos's thread entry 2026-10-29-08.
 - `hermes eikon status` and `try` are the console's `eikon.status` and `eikon.try`.
 
 Checked by Oikos's `code/tests/test_oikos_eikon.py`.

@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 from . import paint as _paint
 from . import settings as _settings
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 PLUGIN_ID = "eikon"
 MAX_SOURCE_BYTES = 25 * 1024 * 1024
